@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_description">Разрешает открыть один Shorts по ссылке из другого приложения. Shorts, открытые внутри YouTube, и пролистывание к следующему Shorts закрываются кнопкой «Назад». Служба читает только экран приложения YouTube и ничего не отправляет в сеть.</string>
+</resources>

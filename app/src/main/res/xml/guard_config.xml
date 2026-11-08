@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- packageNames не задан намеренно: служба должна видеть, из какого приложения
+     открыт YouTube (Telegram и т.п.), чтобы отличить переход по ссылке.
+     Здесь только смена окон; события содержимого и прокрутки служба
+     включает сама, когда на экране YouTube. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_description"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="100" />
