@@ -81,6 +81,33 @@ final class Prefs {
         cachedConsent = v;
     }
 
+    /** Общий выключатель блокировки (служба остаётся включённой в системе, но ничего не делает). */
+    private static volatile Boolean cachedEnabled;
+
+    static boolean enabled(Context c) {
+        Boolean v = cachedEnabled;
+        if (v == null) {
+            v = sp(c).getBoolean("enabled", true);
+            cachedEnabled = v;
+        }
+        return v;
+    }
+
+    static void setEnabled(Context c, boolean v) {
+        sp(c).edit().putBoolean("enabled", v).apply();
+        cachedEnabled = v;
+    }
+
+    static final int THEME_SYSTEM = 0, THEME_LIGHT = 1, THEME_DARK = 2;
+
+    static int theme(Context c) {
+        return sp(c).getInt("theme", THEME_SYSTEM);
+    }
+
+    static void setTheme(Context c, int v) {
+        sp(c).edit().putInt("theme", v).apply();
+    }
+
     static boolean debug(Context c) {
         return sp(c).getBoolean(K_DEBUG, false);
     }

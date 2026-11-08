@@ -112,6 +112,11 @@ public class ShortsGuardService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (e.getPackageName() == null) return;
         if (!Prefs.consented(this)) return; // пока пользователь не согласился в приложении — ничего не делаем
+        if (!Prefs.enabled(this)) {          // блокировка выключена переключателем в приложении
+            allowedSession = false;
+            shortsVisible = false;
+            return;
+        }
         String pkg = e.getPackageName().toString();
         int type = e.getEventType();
         long now = SystemClock.uptimeMillis();
@@ -162,6 +167,7 @@ public class ShortsGuardService extends AccessibilityService {
 
     private void checkScreen() {
         checkScheduled = false;
+        if (!Prefs.consented(this) || !Prefs.enabled(this)) return;
         lastCheckAt = SystemClock.uptimeMillis();
         AccessibilityNodeInfo root = getRootInActiveWindow();
         // Не YouTube (шторка, клавиатура, другое приложение) — состояние не трогаем.

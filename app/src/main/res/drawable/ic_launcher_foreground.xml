@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Белый щит с прорезанным (прозрачным) экраном и кнопкой воспроизведения, перечёркнутый красным.
+     Фон значка прозрачный. Сетка адаптивного значка 108×108. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,22 L80,31 V54 C80,71 68.5,82.5 54,88 C39.5,82.5 28,71 28,54 V31 Z M47.5,34.25 H60.5 A6.75,6.75 0 0 1 67.25,41 V68 A6.75,6.75 0 0 1 60.5,74.75 H47.5 A6.75,6.75 0 0 1 40.75,68 V41 A6.75,6.75 0 0 1 47.5,34.25 Z M47.5,37.75 H60.5 A3.25,3.25 0 0 1 63.75,41 V68 A3.25,3.25 0 0 1 60.5,71.25 H47.5 A3.25,3.25 0 0 1 44.25,68 V41 A3.25,3.25 0 0 1 47.5,37.75 Z M49,46 L62,54.5 L49,63 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:pathData="M37,75 L71,34" />
+    <path
+        android:strokeColor="#E5484D"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M37,75 L71,34" />
+</vector>
