@@ -24,6 +24,7 @@ final class Prefs {
     private static final String K_IDS = "ids";
     private static final String K_DEBUG = "debug";
     private static final String K_DUMP = "dump";
+    private static final String K_CONSENT = "consent";
 
     private Prefs() {}
 
@@ -61,6 +62,23 @@ final class Prefs {
             out.add(s.contains(":id/") ? s : YT + ":id/" + s);
         }
         return Collections.unmodifiableList(out);
+    }
+
+    /** Согласие с описанием работы службы. Без него служба ничего не делает. */
+    private static volatile Boolean cachedConsent;
+
+    static boolean consented(Context c) {
+        Boolean v = cachedConsent;
+        if (v == null) {
+            v = sp(c).getBoolean(K_CONSENT, false);
+            cachedConsent = v;
+        }
+        return v;
+    }
+
+    static void setConsent(Context c, boolean v) {
+        sp(c).edit().putBoolean(K_CONSENT, v).apply();
+        cachedConsent = v;
     }
 
     static boolean debug(Context c) {

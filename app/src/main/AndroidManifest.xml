@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Нужно, чтобы на Android 11+ увидеть список лаунчеров -->
+    <!-- Нужно, чтобы на Android 11+ увидеть список лаунчеров и открыть YouTube -->
+    <!-- Запрос на исключение из экономии батареи (шаг 3 мастера) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <queries>
+        <package android:name="com.google.android.youtube" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.HOME" />

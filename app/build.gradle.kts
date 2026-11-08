@@ -10,25 +10,33 @@ android {
         applicationId = "ru.ilya.shortsguard"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
-    // Постоянный ключ подписи: иначе каждая сборка на GitHub подписана новым случайным
-    // ключом и обновление поверх старой версии не устанавливается.
+    // Релизный ключ хранится не в репозитории, а в секретах GitHub
+    // (SIGNING_KEYSTORE_BASE64, SIGNING_PASSWORD). Сборка в Actions передаёт их через переменные окружения.
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        create("release") {
+            val ks = System.getenv("SIGNING_KEYSTORE_PATH")
+            if (ks != null) {
+                storeFile = file(ks)
+                storePassword = System.getenv("SIGNING_PASSWORD")
+                keyAlias = "shortsguard"
+                keyPassword = System.getenv("SIGNING_PASSWORD")
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
+    }
+
+    lint {
+        checkReleaseBuilds = false
     }
 
     compileOptions {

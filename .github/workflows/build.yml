@@ -17,18 +17,39 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Decode signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$SIGNING_PASSWORD" ]; then
+            echo "::error::Не заданы секреты SIGNING_KEYSTORE_BASE64 и SIGNING_PASSWORD (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK
+        env:
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: chmod +x gradlew && ./gradlew assembleRelease
+
       - uses: actions/upload-artifact@v4
         with:
           name: shorts-guard-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/release/app-release.apk
+
       - name: Publish versioned APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
           NAME="ShortsGuard-v$VER.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "$NAME"
-          gh release delete latest --cleanup-tag -y 2>/dev/null || true
-          gh release view "v$VER" >/dev/null 2>&1 || gh release create "v$VER" --title "Shorts Guard v$VER" --notes "Сборка v$VER" --latest
+          cp app/build/outputs/apk/release/app-release.apk "$NAME"
+          if gh release view "v$VER" >/dev/null 2>&1; then
+            gh release edit "v$VER" --notes-file RELEASE_NOTES.md
+          else
+            gh release create "v$VER" --title "Shorts Guard v$VER" --notes-file RELEASE_NOTES.md --latest
+          fi
           gh release upload "v$VER" "$NAME" --clobber

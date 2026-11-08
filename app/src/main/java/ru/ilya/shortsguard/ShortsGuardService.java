@@ -111,6 +111,7 @@ public class ShortsGuardService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (e.getPackageName() == null) return;
+        if (!Prefs.consented(this)) return; // пока пользователь не согласился в приложении — ничего не делаем
         String pkg = e.getPackageName().toString();
         int type = e.getEventType();
         long now = SystemClock.uptimeMillis();
