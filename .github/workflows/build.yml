@@ -22,9 +22,13 @@ jobs:
         with:
           name: shorts-guard-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Publish APK to release "latest"
+      - name: Publish versioned APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Shorts Guard" --notes "Последняя сборка"
-          gh release upload latest app/build/outputs/apk/debug/app-debug.apk --clobber
+          VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          NAME="ShortsGuard-v$VER.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$NAME"
+          gh release delete latest --cleanup-tag -y 2>/dev/null || true
+          gh release view "v$VER" >/dev/null 2>&1 || gh release create "v$VER" --title "Shorts Guard v$VER" --notes "Сборка v$VER" --latest
+          gh release upload "v$VER" "$NAME" --clobber
