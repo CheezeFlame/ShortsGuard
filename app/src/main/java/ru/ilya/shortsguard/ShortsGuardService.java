@@ -40,10 +40,12 @@ public class ShortsGuardService extends AccessibilityService {
 
     private static final long ARM_WINDOW_MS = 5000;   // сколько ждать появления Shorts после перехода из другого приложения
     private static final long GRACE_MS = 1500;        // первые мс разрешённого Shorts прокрутку игнорируем (стартовая разметка)
-    private static final long BACK_COOLDOWN_MS = 900; // защита от двойного «Назад»
+    private static final long BACK_COOLDOWN_MS = 600; // защита от двойного «Назад»
+    private static final long DIALOG_BACK_MS = 300;   // второй «Назад», если первый только закрыл диалог
     private static final long FAST_CHECK_MS = 250;    // проверка после смены окна / «Назад»
     private static final long SLOW_CHECK_MS = 1000;   // проверка по изменению содержимого — не чаще раза в секунду
-    private static final int MAX_BACK_IN_ROW = 3;     // чтобы случайно не выкинуть из YouTube совсем
+    private static final int MAX_BACKS_PER_WINDOW = 4; // не больше 4 «Назад»...
+    private static final long BACK_WINDOW_MS = 4000;   // ...за 4 с, потом пауза до конца окна и снова (не сдаёмся навсегда)
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable checkRunnable = this::checkScreen;
@@ -66,7 +68,8 @@ public class ShortsGuardService extends AccessibilityService {
     private boolean allowedSession;
     private long sessionStart;
     private long lastBack;
-    private int backsInRow;
+    private int backsInWindow;
+    private long backWindowStart;
     private long lastDump;
 
     @Override
@@ -181,16 +184,18 @@ public class ShortsGuardService extends AccessibilityService {
                 allowedSession = true;
                 sessionStart = now;
                 armedUntil = 0;
-                backsInRow = 0;
             } else if (!shortsVisible) { // Shorts открыт изнутри YouTube
                 allowedSession = false;
             }
             shortsVisible = true;
-            if (!allowedSession) block("Shorts заблокированы");
+            // Shorts виден, но не в активном окне — сверху диалог (например, «лимит Shorts»).
+            // «Назад» его только закроет, поэтому сразу понадобится второй.
+            boolean dialogOnTop = findShortsNode(root) == null;
+            if (!allowedSession) block("Shorts заблокированы", dialogOnTop);
         } else {
             shortsVisible = false;
             allowedSession = false;
-            backsInRow = 0;
+            backsInWindow = 0;
         }
     }
 
@@ -240,15 +245,41 @@ public class ShortsGuardService extends AccessibilityService {
     }
 
     private void block(String msg) {
+        block(msg, false);
+    }
+
+    private void block(String msg, boolean dialogOnTop) {
         long now = SystemClock.uptimeMillis();
         allowedSession = false;
-        if (now - lastBack < BACK_COOLDOWN_MS || backsInRow >= MAX_BACK_IN_ROW) return;
-        lastBack = now;
-        backsInRow++;
+
+        if (now - backWindowStart > BACK_WINDOW_MS) {
+            backWindowStart = now;
+            backsInWindow = 0;
+        }
+        long wait = 0;
+        if (backsInWindow >= MAX_BACKS_PER_WINDOW) {
+            wait = backWindowStart + BACK_WINDOW_MS - now;   // пауза до конца окна
+        } else if (now - lastBack < BACK_COOLDOWN_MS) {
+            wait = lastBack + BACK_COOLDOWN_MS - now;        // кулдаун
+        }
+        if (wait > 0) {
+            // Раньше здесь был просто return — и если событий больше не приходило, Shorts оставался.
+            handler.postDelayed(() -> scheduleCheck(0), wait + 50);
+            return;
+        }
+
+        if (backsInWindow == 0) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        backsInWindow++;
         performGlobalAction(GLOBAL_ACTION_BACK);
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        // Проверить, ушли ли с Shorts; если нет — ещё «Назад» (не больше MAX_BACK_IN_ROW).
-        handler.postDelayed(() -> scheduleCheck(FAST_CHECK_MS), BACK_COOLDOWN_MS + 50);
+
+        if (dialogOnTop) {
+            // Разрешаем следующий «Назад» уже через DIALOG_BACK_MS, а не через полный кулдаун.
+            lastBack = now - BACK_COOLDOWN_MS + DIALOG_BACK_MS;
+            handler.postDelayed(() -> scheduleCheck(0), DIALOG_BACK_MS + 20);
+        } else {
+            lastBack = now;
+            handler.postDelayed(() -> scheduleCheck(0), BACK_COOLDOWN_MS + 50);
+        }
     }
 
     /** Режим отладки: собрать id элементов текущего экрана YouTube. */
